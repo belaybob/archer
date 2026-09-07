@@ -1,0 +1,29 @@
+:root {
+  --ink: #1a1a1a;
+  --paper: #ffffff;
+  --muted: #6b6b6b;
+  --accent: #b5442e; /* placeholder -- swap once a design/brand is chosen */
+  --border: #e3e3e3;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+
+a {
+  color: var(--accent);
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}

@@ -1,0 +1,323 @@
+// Archer data model
+//
+// Design principle: a tournament's FORMAT (distances, arrow counts, target
+// faces, course layout, scoring method) is stored as configuration on a
+// FormatTemplate, not hard-coded per format. That's what lets one schema
+// cover Olympic-style target archery, indoor leagues, field/3D courses, and
+// handicap-based club competitions without a table per format. See the
+// Archer project plan doc for the research behind this.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Tenancy, identity, roles
+// ---------------------------------------------------------------------------
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  contactEmail String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships    Membership[]
+  tournaments    Tournament[]
+  formatTemplates FormatTemplate[]
+  handicapRecords HandicapRecord[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String? // nullable to allow future OAuth-only accounts
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships       Membership[]
+  registrations     Registration[]      @relation("ArcherRegistrations")
+  registeredOthers  Registration[]      @relation("RegisteredBy")
+  managedTeams      Team[]
+  handicapRecords   HandicapRecord[]
+  sessions          Session[]
+}
+
+enum OrgRole {
+  OWNER   // full control of the organization
+  ADMIN   // can manage tournaments, formats, members
+  MANAGER // can create/run tournaments and bulk-register rosters, not manage members/billing
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String
+  role           OrgRole
+  createdAt      DateTime     @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+}
+
+// Portable, DB-backed sessions instead of a host-specific identity product.
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Tournament format library (the flexible part)
+// ---------------------------------------------------------------------------
+
+enum FormatType {
+  TARGET        // World-Archery style outdoor target
+  INDOOR_TARGET
+  FIELD
+  THREE_D
+  CLOUT
+  LEAGUE
+  CUSTOM
+}
+
+enum ScoringMethod {
+  CUMULATIVE_SCORE   // total score across ends/course wins (ranking rounds, field, 3D qualifiers)
+  SET_SYSTEM         // head-to-head, match-points per set, e.g. Olympic elimination
+  HANDICAP_ADJUSTED  // score adjusted by a handicap table for fair comparison (club leagues)
+}
+
+// A reusable format definition. `organizationId` null = a built-in preset
+// available to everyone; non-null = an org's own custom/cloned format.
+// `config` holds the shape that varies by FormatType, e.g.:
+//   TARGET/INDOOR: { distancesMeters: [70], endsCount: 12, arrowsPerEnd: 6, targetFaceCm: 122 }
+//   FIELD/THREE_D: { stationCount: 24, arrowsPerStation: 2, distanceMode: "marked" | "unmarked", terrain: "woodland" }
+//   LEAGUE:        { roundTemplate: "WA 18m", seasonWeeks: 10 }
+model FormatTemplate {
+  id             String        @id @default(cuid())
+  organizationId String?
+  name           String
+  formatType     FormatType
+  description    String?
+  config         Json
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  stages       TournamentStage[]
+}
+
+// ---------------------------------------------------------------------------
+// Tournaments
+// ---------------------------------------------------------------------------
+
+enum TournamentStatus {
+  DRAFT
+  PUBLISHED
+  REGISTRATION_OPEN
+  REGISTRATION_CLOSED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Tournament {
+  id                  String           @id @default(cuid())
+  organizationId      String
+  name                String
+  slug                String           @unique
+  description         String?
+  venue               String?
+  startDate           DateTime
+  endDate             DateTime
+  timezone            String           @default("UTC")
+  status              TournamentStatus @default(DRAFT)
+  isPublic            Boolean          @default(true)
+  capacity             Int?
+  registrationOpensAt  DateTime?
+  registrationClosesAt DateTime?
+  // Reserved for the future payments phase -- not used in v1.
+  entryFeeCents        Int?
+  entryFeeCurrency     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization  Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  stages        TournamentStage[]
+  divisions     Division[]
+  registrations Registration[]
+  teams         Team[]
+}
+
+// A tournament can have multiple stages, e.g. "Ranking Round" (cumulative)
+// followed by "Elimination" (set system), or a single stage for a simple
+// field/league event.
+model TournamentStage {
+  id               String        @id @default(cuid())
+  tournamentId     String
+  formatTemplateId String
+  name             String
+  sequence         Int
+  scoringMethod    ScoringMethod
+
+  tournament     Tournament     @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  formatTemplate FormatTemplate @relation(fields: [formatTemplateId], references: [id])
+  scoreEntries   ScoreEntry[]
+  matches        Match[]
+
+  @@unique([tournamentId, sequence])
+}
+
+// Bowstyle + age category + gender combination. Kept as free-form fields
+// (rather than fixed enums) because World Archery / USA Archery / NFAA all
+// define these slightly differently.
+model Division {
+  id           String @id @default(cuid())
+  tournamentId String
+  name         String // e.g. "Recurve", "Compound", "Barebow", "Longbow", "Traditional"
+  ageCategory  String? // e.g. "Cub", "Junior", "Adult", "Master" -- org-defined
+  gender       String? // "Male" | "Female" | "Open" -- org-defined
+
+  tournament    Tournament     @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  registrations Registration[]
+  matches       Match[]
+}
+
+// ---------------------------------------------------------------------------
+// Registration (self-registration + manager/bulk registration)
+// ---------------------------------------------------------------------------
+
+enum RegistrationStatus {
+  PENDING
+  CONFIRMED
+  WAITLISTED
+  WITHDRAWN
+  CHECKED_IN
+}
+
+model Registration {
+  id             String             @id @default(cuid())
+  tournamentId   String
+  divisionId     String
+  archerId       String // the archer competing
+  registeredById String // who created the registration: the archer themself, or a manager
+  teamId         String?
+  status         RegistrationStatus @default(PENDING)
+  notes          String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  tournament   Tournament   @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  division     Division     @relation(fields: [divisionId], references: [id])
+  archer       User         @relation("ArcherRegistrations", fields: [archerId], references: [id])
+  registeredBy User         @relation("RegisteredBy", fields: [registeredById], references: [id])
+  team         Team?        @relation(fields: [teamId], references: [id])
+  scoreEntries ScoreEntry[]
+
+  @@unique([tournamentId, archerId, divisionId])
+}
+
+// For team/mixed-team events, and for a club manager's bulk roster entry.
+model Team {
+  id             String   @id @default(cuid())
+  tournamentId   String
+  organizationId String? // the club the team represents, if any
+  name           String
+  managerId      String?
+
+  tournament    Tournament     @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  manager       User?          @relation(fields: [managerId], references: [id])
+  registrations Registration[]
+}
+
+// ---------------------------------------------------------------------------
+// Scoring
+// ---------------------------------------------------------------------------
+
+// Per-end score for cumulative/handicap stages. `arrows` keeps per-arrow
+// detail available (e.g. [10, 9, 9, 8, 10, 7]) without needing a separate
+// Arrow table; endTotal is denormalized for fast leaderboard queries.
+model ScoreEntry {
+  id             String @id @default(cuid())
+  stageId        String
+  registrationId String
+  endNumber      Int
+  arrows         Json // number[] -- individual arrow scores for this end
+  endTotal       Int
+
+  stage        TournamentStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  registration Registration    @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+
+  @@unique([stageId, registrationId, endNumber])
+}
+
+enum MatchStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETE
+}
+
+// Head-to-head elimination bracket match for SET_SYSTEM stages.
+// `sets` holds the set-by-set breakdown, e.g.
+// [{ "a": 28, "b": 26, "aPoints": 2, "bPoints": 0 }, ...]
+//
+// Bracket convention: roundNumber 1 = first round (most matches), increasing
+// toward the final (highest roundNumber = 1 match). `slot` is the match's
+// 0-indexed position within its round, assigned at build time using
+// standard bracket seeding order -- it's what makes advancement mechanical:
+// the winners of round N's slots 2k and 2k+1 feed round N+1's slot k. See
+// src/server/brackets.ts.
+//
+// `divisionId` scopes a bracket to one division -- a stage often covers
+// several divisions at once (e.g. one "Elimination" stage for Recurve,
+// Compound, and Barebow), and each needs its own separate bracket rather
+// than mixing every division's archers into one.
+model Match {
+  id             String      @id @default(cuid())
+  stageId        String
+  divisionId     String
+  roundNumber    Int
+  slot           Int
+  participantAId String? // a Registration.id, resolved at build time or via advancement (null = not yet decided or a bye)
+  participantBId String?
+  sets           Json?
+  winnerId       String?
+  status         MatchStatus @default(SCHEDULED)
+
+  stage    TournamentStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  division Division        @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+
+  @@unique([stageId, divisionId, roundNumber, slot])
+}
+
+// ---------------------------------------------------------------------------
+// Leagues & handicaps
+// ---------------------------------------------------------------------------
+
+// A snapshot of an archer's handicap after a scored round, for club leagues
+// and classification tracking (see Archery GB-style handicap systems).
+model HandicapRecord {
+  id             String   @id @default(cuid())
+  userId         String
+  organizationId String
+  roundName      String // e.g. "WA 18m", "Portsmouth"
+  score          Int
+  handicapValue  Int
+  recordedAt     DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}

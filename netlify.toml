@@ -1,0 +1,17 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# `npm run build` runs scripts/build.sh, which resolves DATABASE_URL (falling back to Netlify DB
+# via `@netlify/database` if it isn't already set -- see src/lib/db.ts and README.md), then runs
+# `prisma generate && prisma migrate deploy` before `next build`, so pending Prisma migrations
+# apply automatically on every deploy. Prisma's migrations (prisma/migrations/) are the schema's
+# only source of truth -- this project doesn't use Netlify DB's own migration system
+# (netlify/database/migrations/), so that directory is intentionally absent.
+#
+# Other environment variables (AUTH_SECRET, NEXT_PUBLIC_SITE_URL) are set in the Netlify site
+# dashboard, not here -- keep secrets out of the repo. If you're using a non-Netlify Postgres
+# instead of Netlify DB, set DATABASE_URL there too and Netlify DB is never touched.
