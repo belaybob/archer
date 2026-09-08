@@ -20,7 +20,21 @@ if (process.env.DATABASE_URL) {
   process.exit(0);
 }
 
-const url = getConnectionString();
+let url;
+try {
+  url = getConnectionString();
+} catch (err) {
+  console.error(
+    "resolve-db-url: Netlify DB isn't reachable from this shell (" + err.message + ").\n" +
+      "This is expected for a plain `npm run build` / `npm run dev` run outside Netlify --\n" +
+      "getConnectionString() only resolves inside an actual Netlify build (e.g. a deploy triggered\n" +
+      "by a git push, once this site is linked to a repo) or under `netlify dev` / `netlify build`\n" +
+      "locally. For a plain local run, set DATABASE_URL yourself instead, or run this via\n" +
+      "`netlify dev:exec -- npm run db:url`."
+  );
+  process.exit(1);
+}
+
 if (!url) {
   console.error(
     "resolve-db-url: DATABASE_URL isn't set and Netlify DB didn't return a connection string.\n" +
