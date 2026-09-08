@@ -11,7 +11,13 @@ import {
 
 const STATUS_OPTIONS = ["PENDING", "CONFIRMED", "WAITLISTED", "WITHDRAWN", "CHECKED_IN"] as const;
 
-export default async function TournamentRegistrationsPage({ params }: { params: { id: string } }) {
+export default async function TournamentRegistrationsPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams?: { message?: string };
+}) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
@@ -21,11 +27,26 @@ export default async function TournamentRegistrationsPage({ params }: { params: 
   await requireMembership(user.id, tournament.organizationId);
 
   const registrations = await listRegistrationsForTournament(tournament.id);
+  const message = searchParams?.message;
 
   return (
     <main className="container" style={{ padding: "3rem 0" }}>
       <p style={{ color: "var(--muted)", marginBottom: 0 }}>{tournament.organization.name}</p>
       <h1 style={{ marginTop: "0.25rem" }}>{tournament.name} — registrations</h1>
+
+      {message && (
+        <p
+          style={{
+            background: "#fff7e6",
+            border: "1px solid var(--border)",
+            borderRadius: 6,
+            padding: "0.75rem 1rem",
+            marginTop: "1rem",
+          }}
+        >
+          {message}
+        </p>
+      )}
 
       <section style={{ marginTop: "2rem" }}>
         <h2>Registrants ({registrations.length})</h2>

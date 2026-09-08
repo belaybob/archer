@@ -20,7 +20,15 @@ export async function registerSelfAction(formData: FormData) {
   const tournamentId = String(formData.get("tournamentId") || "");
   const divisionId = String(formData.get("divisionId") || "");
 
-  await registerSelf({ tournamentId, archerId: user.id, divisionId });
+  // Business-logic errors (e.g. "already registered") are expected, everyday
+  // outcomes here, not crashes -- show them inline via a redirect + query
+  // param instead of letting them fall through to Next's generic error page.
+  try {
+    await registerSelf({ tournamentId, archerId: user.id, divisionId });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Couldn't register for this tournament.";
+    redirect(`/app/tournaments/${tournamentId}/register?message=${encodeURIComponent(message)}`);
+  }
 
   redirect(`/app/tournaments/${tournamentId}`);
 }
@@ -38,13 +46,18 @@ export async function registerByManagerAction(formData: FormData) {
   const archerEmail = String(formData.get("archerEmail") || "");
   const archerName = String(formData.get("archerName") || "");
 
-  await registerByManager({
-    tournamentId,
-    divisionId,
-    registeredById: user.id,
-    archerEmail,
-    archerName,
-  });
+  try {
+    await registerByManager({
+      tournamentId,
+      divisionId,
+      registeredById: user.id,
+      archerEmail,
+      archerName,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Couldn't add that registrant.";
+    redirect(`/app/tournaments/${tournamentId}/registrations?message=${encodeURIComponent(message)}`);
+  }
 
   revalidatePath(`/app/tournaments/${tournamentId}/registrations`);
 }
@@ -72,21 +85,30 @@ export async function registerTeamRosterAction(formData: FormData) {
       return second ? { name: first, email: second } : { email: first };
     });
 
-  const result = await registerTeamRoster({
-    tournamentId,
-    divisionId,
-    registeredById: user.id,
-    organizationId: tournament.organizationId,
-    teamName,
-    archers,
-  });
+  // A roster with some (or all) already-registered archers isn't a crash --
+  // it's a normal outcome worth reporting inline, same reasoning as above.
+  let message: string | null = null;
+  try {
+    const result = await registerTeamRoster({
+      tournamentId,
+      divisionId,
+      registeredById: user.id,
+      organizationId: tournament.organizationId,
+      teamName,
+      archers,
+    });
 
-  if (result.skipped.length > 0) {
-    throw new Error(
-      `Registered ${result.registered.length} of ${archers.length}. Skipped: ${result.skipped
+    if (result.skipped.length > 0) {
+      message = `Registered ${result.registered.length} of ${archers.length}. Skipped: ${result.skipped
         .map((s) => `${s.email} (${s.reason})`)
-        .join(", ")}`
-    );
+        .join(", ")}`;
+    }
+  } catch (error) {
+    message = error instanceof Error ? error.message : "Couldn't register that roster.";
+  }
+
+  if (message) {
+    redirect(`/app/tournaments/${tournamentId}/registrations?message=${encodeURIComponent(message)}`);
   }
 
   revalidatePath(`/app/tournaments/${tournamentId}/registrations`);

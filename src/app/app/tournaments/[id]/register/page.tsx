@@ -3,12 +3,19 @@ import { getCurrentUser } from "@/lib/current-user";
 import { getTournamentDetail } from "@/server/tournaments";
 import { registerSelfAction } from "@/app/actions/registrations";
 
-export default async function SelfRegisterPage({ params }: { params: { id: string } }) {
+export default async function SelfRegisterPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams?: { message?: string };
+}) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const tournament = await getTournamentDetail(params.id);
   if (!tournament) notFound();
+  const message = searchParams?.message;
 
   if (tournament.status !== "REGISTRATION_OPEN") {
     return (
@@ -26,6 +33,19 @@ export default async function SelfRegisterPage({ params }: { params: { id: strin
     <main className="container" style={{ padding: "3rem 0", maxWidth: 480 }}>
       <p style={{ color: "var(--muted)", marginBottom: 0 }}>{tournament.organization.name}</p>
       <h1 style={{ marginTop: "0.25rem" }}>Register for {tournament.name}</h1>
+
+      {message && (
+        <p
+          style={{
+            background: "#fff7e6",
+            border: "1px solid var(--border)",
+            borderRadius: 6,
+            padding: "0.75rem 1rem",
+          }}
+        >
+          {message}
+        </p>
+      )}
 
       <form action={registerSelfAction} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
         <input type="hidden" name="tournamentId" value={tournament.id} />
