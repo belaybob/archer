@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 const HERO_IMAGE_COUNT = 10;
 const HERO_IMAGES = Array.from(
   { length: HERO_IMAGE_COUNT },
-  (_, i) => `/hero/hero-${String(i + 1).padStart(2, "0")}.jpg`
+  (_, i) => `/hero/hero-${String(i + 1).padStart(2, "0")}.webp`
 );
 
 function pickHeroImage() {
