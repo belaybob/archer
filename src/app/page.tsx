@@ -1,69 +1,274 @@
 /**
- * Marketing landing page -- intentionally plain. This is a functional
- * placeholder; the real visual design comes later once Adam has references
- * to work from. Structure (hero, format list, CTA) is meant to survive a
- * restyle without moving content around.
+ * Marketing landing page. Bold display type, a rotating full-bleed
+ * photographic hero, floating glassmorphic cards, pill nav/CTAs -- the
+ * visual language the authenticated app mirrors (minus the photography).
+ *
+ * The hero image is chosen server-side, at request time (`force-dynamic`
+ * below disables static caching for this route), so a different photo shows
+ * up on every page load without any client-side hydration trickery.
  */
-import { BUILT_IN_FORMAT_PRESETS } from "@/lib/tournament-formats";
+import { BUILT_IN_FORMAT_PRESETS, type FormatType } from "@/lib/tournament-formats";
+
+export const dynamic = "force-dynamic";
+
+const HERO_IMAGE_COUNT = 10;
+const HERO_IMAGES = Array.from(
+  { length: HERO_IMAGE_COUNT },
+  (_, i) => `/hero/hero-${String(i + 1).padStart(2, "0")}.jpg`
+);
+
+function pickHeroImage() {
+  return HERO_IMAGES[Math.floor(Math.random() * HERO_IMAGES.length)];
+}
+
+const FORMAT_LABELS: Record<FormatType, string> = {
+  TARGET: "Outdoor target",
+  INDOOR_TARGET: "Indoor",
+  FIELD: "Field",
+  THREE_D: "3D",
+  CLOUT: "Clout",
+  LEAGUE: "Club leagues",
+  CUSTOM: "Custom",
+};
+
+function formatCards() {
+  const seen = new Set<FormatType>();
+  const cards: { type: FormatType; label: string; description: string }[] = [];
+  for (const preset of BUILT_IN_FORMAT_PRESETS) {
+    if (seen.has(preset.formatType)) continue;
+    seen.add(preset.formatType);
+    cards.push({
+      type: preset.formatType,
+      label: FORMAT_LABELS[preset.formatType],
+      description: preset.description,
+    });
+  }
+  return cards;
+}
 
 export default function MarketingHomePage() {
-  const formats = Array.from(new Set(BUILT_IN_FORMAT_PRESETS.map((f) => f.formatType)));
+  const heroImage = pickHeroImage();
+  const formats = formatCards();
 
   return (
     <main>
-      <section style={{ padding: "4rem 0", borderBottom: "1px solid var(--border)" }}>
-        <div className="container">
-          <h1 style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>Archer</h1>
-          <p style={{ fontSize: "1.25rem", color: "var(--muted)", maxWidth: 560 }}>
-            Register archers and run tournaments — target, indoor, field, 3D, and
-            club leagues — with self-registration for archers and roster
-            registration for team managers.
-          </p>
-          <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem" }}>
+      {/* ---------------------------------------------------------------- */}
+      {/* Hero                                                              */}
+      {/* ---------------------------------------------------------------- */}
+      <section
+        style={{
+          position: "relative",
+          minHeight: "92vh",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
+        <img
+          src={heroImage}
+          alt=""
+          fetchPriority="high"
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            zIndex: -2,
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: -1,
+            background:
+              "linear-gradient(180deg, rgba(15,13,10,0.55) 0%, rgba(15,13,10,0.35) 35%, rgba(15,13,10,0.75) 100%)",
+          }}
+        />
+
+        <header style={{ padding: "1.5rem 0" }}>
+          <div
+            className="container"
+            style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+          >
             <a
-              href="/signup"
+              href="/"
               style={{
-                display: "inline-block",
-                padding: "0.75rem 1.5rem",
-                background: "var(--accent)",
-                color: "white",
-                borderRadius: 6,
+                fontFamily: "var(--font-display)",
+                fontWeight: 800,
+                fontSize: "1.4rem",
+                color: "#fff",
                 textDecoration: "none",
-                fontWeight: 600,
+                letterSpacing: "-0.02em",
               }}
             >
-              Get started
+              Archer
             </a>
-            <a
-              href="/login"
-              style={{
-                display: "inline-block",
-                padding: "0.75rem 1.5rem",
-                color: "var(--ink)",
-                textDecoration: "none",
-                fontWeight: 600,
-              }}
-            >
-              Log in
+            <nav className="pill-nav on-dark">
+              <a href="/app/tournaments" className="pill-nav-link">
+                Browse tournaments
+              </a>
+              <a href="/login" className="pill-nav-link">
+                Log in
+              </a>
+              <a href="/signup" className="pill-btn pill-btn-accent pill-btn-sm">
+                Get started
+              </a>
+            </nav>
+          </div>
+        </header>
+
+        <div className="container" style={{ flex: 1, display: "flex", alignItems: "center", padding: "3rem 0" }}>
+          <div style={{ maxWidth: 720 }}>
+            <span className="eyebrow on-dark">Multi-format tournament platform</span>
+            <h1 className="display-1" style={{ color: "#fff", marginTop: "0.75rem" }}>
+              Run the tournament.
+              <br />
+              Not the spreadsheet.
+            </h1>
+            <p className="lede on-dark" style={{ marginTop: "1.25rem", maxWidth: 560 }}>
+              Archer handles registration and management for target, indoor, field, 3D, and club
+              league archery — self-registration for archers, roster registration for team
+              managers, every format built in.
+            </p>
+            <div style={{ display: "flex", gap: "0.85rem", marginTop: "2rem", flexWrap: "wrap" }}>
+              <a href="/signup" className="pill-btn pill-btn-accent">
+                Get started free
+              </a>
+              <a href="/app/tournaments" className="pill-btn pill-btn-on-dark">
+                Browse tournaments
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="container" style={{ paddingBottom: "2.5rem" }}>
+          <div className="card-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
+            <div className="glass-card-dark" style={{ padding: "1.1rem 1.4rem" }}>
+              <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "1.6rem" }}>
+                6 formats
+              </div>
+              <p style={{ margin: 0, fontSize: "0.9rem" }}>Target to 3D to club leagues</p>
+            </div>
+            <div className="glass-card-dark" style={{ padding: "1.1rem 1.4rem" }}>
+              <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "1.6rem" }}>
+                Self or manager
+              </div>
+              <p style={{ margin: 0, fontSize: "0.9rem" }}>Register solo or as a whole roster</p>
+            </div>
+            <div className="glass-card-dark" style={{ padding: "1.1rem 1.4rem" }}>
+              <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "1.6rem" }}>
+                Built-in brackets
+              </div>
+              <p style={{ margin: 0, fontSize: "0.9rem" }}>Ranking rounds, seeding, elimination</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* Formats                                                           */}
+      {/* ---------------------------------------------------------------- */}
+      <section style={{ padding: "6rem 0" }}>
+        <div className="container">
+          <span className="eyebrow">Every common format</span>
+          <h2 className="display-2" style={{ marginTop: "0.75rem", maxWidth: 640 }}>
+            Configured, not hard-coded.
+          </h2>
+          <p className="lede" style={{ marginTop: "0.75rem", marginBottom: "3rem" }}>
+            Distances, ends, target faces, course layout, and scoring method are all
+            configuration — so it flexes to how your organization actually competes, instead of
+            forcing you into one shape of tournament.
+          </p>
+
+          <div className="card-grid">
+            {formats.map((format) => (
+              <div key={format.type} className="glass-card">
+                <span className="status-pill">{format.label}</span>
+                <p className="muted" style={{ marginTop: "1rem", marginBottom: 0, fontSize: "0.95rem" }}>
+                  {format.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* Registration flexibility                                         */}
+      {/* ---------------------------------------------------------------- */}
+      <section style={{ padding: "2rem 0 6rem" }}>
+        <div className="container">
+          <div className="card-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+            <div className="surface-card">
+              <span className="eyebrow">Self-registration</span>
+              <h3 style={{ marginTop: "0.75rem" }}>Archers sign up themselves</h3>
+              <p className="muted" style={{ marginBottom: 0 }}>
+                Archers create an account, browse open tournaments, and register into a division
+                in a couple of clicks — with waitlisting handled automatically once capacity is
+                reached.
+              </p>
+            </div>
+            <div className="surface-card">
+              <span className="eyebrow">Manager registration</span>
+              <h3 style={{ marginTop: "0.75rem" }}>Managers register whole rosters</h3>
+              <p className="muted" style={{ marginBottom: 0 }}>
+                Club and team managers add individual archers or paste a whole roster at once —
+                each archer gets an account automatically, no separate sign-up required.
+              </p>
+            </div>
+            <div className="surface-card">
+              <span className="eyebrow">Organizer tools</span>
+              <h3 style={{ marginTop: "0.75rem" }}>Run the whole event</h3>
+              <p className="muted" style={{ marginBottom: 0 }}>
+                Publish tournaments, open and close registration, track every registrant, and
+                move status forward as the event runs — all from one dashboard.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* Final CTA                                                         */}
+      {/* ---------------------------------------------------------------- */}
+      <section style={{ padding: "2rem 0 6rem" }}>
+        <div className="container">
+          <div
+            className="glass-card-strong"
+            style={{
+              background: "var(--ink)",
+              color: "#fff",
+              border: "none",
+              padding: "3.5rem 2.5rem",
+              textAlign: "center",
+            }}
+          >
+            <h2 className="display-2" style={{ color: "#fff" }}>
+              Ready to run your next tournament?
+            </h2>
+            <p className="lede on-dark" style={{ margin: "1rem auto 2rem", textAlign: "center" }}>
+              Create your organization and publish a tournament in minutes.
+            </p>
+            <a href="/signup" className="pill-btn pill-btn-accent">
+              Get started free
             </a>
           </div>
         </div>
       </section>
 
-      <section style={{ padding: "3rem 0" }}>
-        <div className="container">
-          <h2 style={{ fontSize: "1.5rem" }}>Built for how archery is actually run</h2>
-          <p style={{ color: "var(--muted)" }}>
-            Every tournament format is configuration, not a hard-coded feature —
-            so it flexes to how your organization actually competes.
-          </p>
-          <ul style={{ paddingLeft: "1.25rem", color: "var(--muted)" }}>
-            {formats.map((format) => (
-              <li key={format}>{format.replace(/_/g, " ")}</li>
-            ))}
-          </ul>
+      <footer style={{ borderTop: "1px solid var(--border)", padding: "2rem 0" }}>
+        <div
+          className="container"
+          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}
+        >
+          <span style={{ fontFamily: "var(--font-display)", fontWeight: 800 }}>Archer</span>
+          <span className="muted" style={{ fontSize: "0.9rem" }}>
+            Tournament registration &amp; management for every common archery format.
+          </span>
         </div>
-      </section>
+      </footer>
     </main>
   );
 }

@@ -31,133 +31,142 @@ export default async function TournamentRegistrationsPage({
 
   return (
     <main className="container" style={{ padding: "3rem 0" }}>
-      <p style={{ color: "var(--muted)", marginBottom: 0 }}>{tournament.organization.name}</p>
-      <h1 style={{ marginTop: "0.25rem" }}>{tournament.name} — registrations</h1>
+      <p className="muted" style={{ marginBottom: 0 }}>
+        {tournament.organization.name}
+      </p>
+      <h1 className="display-2" style={{ marginTop: "0.25rem" }}>
+        {tournament.name} — registrations
+      </h1>
 
       {message && (
-        <p
-          style={{
-            background: "#fff7e6",
-            border: "1px solid var(--border)",
-            borderRadius: 6,
-            padding: "0.75rem 1rem",
-            marginTop: "1rem",
-          }}
-        >
+        <p className="banner" style={{ marginTop: "1rem" }}>
           {message}
         </p>
       )}
 
-      <section style={{ marginTop: "2rem" }}>
-        <h2>Registrants ({registrations.length})</h2>
+      <section className="glass-card" style={{ marginTop: "2rem" }}>
+        <h2 style={{ marginTop: 0 }}>Registrants ({registrations.length})</h2>
         {registrations.length === 0 ? (
-          <p style={{ color: "var(--muted)" }}>No one has registered yet.</p>
+          <p className="muted" style={{ marginBottom: 0 }}>
+            No one has registered yet.
+          </p>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>
-                <th style={{ padding: "0.4rem 0" }}>Archer</th>
-                <th>Division</th>
-                <th>Team</th>
-                <th>Registered by</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {registrations.map((registration) => (
-                <tr key={registration.id} style={{ borderBottom: "1px solid var(--border)" }}>
-                  <td style={{ padding: "0.4rem 0" }}>
-                    {registration.archer.name || registration.archer.email}
-                  </td>
-                  <td>{registration.division.name}</td>
-                  <td>{registration.team?.name ?? "—"}</td>
-                  <td style={{ color: "var(--muted)" }}>
-                    {registration.registeredBy.name || registration.registeredBy.email}
-                  </td>
-                  <td>
-                    <form action={updateRegistrationStatusAction} style={{ display: "flex", gap: "0.4rem" }}>
-                      <input type="hidden" name="registrationId" value={registration.id} />
-                      <input type="hidden" name="tournamentId" value={tournament.id} />
-                      <select name="status" defaultValue={registration.status}>
-                        {STATUS_OPTIONS.map((status) => (
-                          <option key={status} value={status}>
-                            {status.replace(/_/g, " ").toLowerCase()}
-                          </option>
-                        ))}
-                      </select>
-                      <button type="submit">Update</button>
-                    </form>
-                  </td>
+          <div style={{ overflowX: "auto" }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Archer</th>
+                  <th>Division</th>
+                  <th>Team</th>
+                  <th>Registered by</th>
+                  <th>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {registrations.map((registration) => (
+                  <tr key={registration.id}>
+                    <td>{registration.archer.name || registration.archer.email}</td>
+                    <td>{registration.division.name}</td>
+                    <td>{registration.team?.name ?? "—"}</td>
+                    <td className="muted">{registration.registeredBy.name || registration.registeredBy.email}</td>
+                    <td>
+                      <form action={updateRegistrationStatusAction} style={{ display: "flex", gap: "0.4rem" }}>
+                        <input type="hidden" name="registrationId" value={registration.id} />
+                        <input type="hidden" name="tournamentId" value={tournament.id} />
+                        <select name="status" defaultValue={registration.status} style={{ width: "auto" }}>
+                          {STATUS_OPTIONS.map((status) => (
+                            <option key={status} value={status}>
+                              {status.replace(/_/g, " ").toLowerCase()}
+                            </option>
+                          ))}
+                        </select>
+                        <button type="submit" className="pill-btn pill-btn-ghost pill-btn-sm">
+                          Update
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
-      <section style={{ marginTop: "2.5rem", maxWidth: 480 }}>
-        <h2>Add a registrant</h2>
-        <p style={{ color: "var(--muted)" }}>
-          If they don&apos;t have an Archer account yet, one is created for them with this email.
-        </p>
-        <form action={registerByManagerAction} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-          <input type="hidden" name="tournamentId" value={tournament.id} />
-          <label>
-            Archer name
-            <input name="archerName" type="text" style={{ display: "block", width: "100%" }} />
-          </label>
-          <label>
-            Archer email
-            <input name="archerEmail" type="email" required style={{ display: "block", width: "100%" }} />
-          </label>
-          <label>
-            Division
-            <select name="divisionId" required style={{ display: "block", width: "100%" }}>
-              {tournament.divisions.map((division) => (
-                <option key={division.id} value={division.id}>
-                  {division.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button type="submit">Add registrant</button>
-        </form>
-      </section>
+      <div className="card-grid" style={{ marginTop: "2rem" }}>
+        <section className="glass-card">
+          <h2 style={{ marginTop: 0 }}>Add a registrant</h2>
+          <p className="muted" style={{ fontSize: "0.9rem" }}>
+            If they don&apos;t have an Archer account yet, one is created for them with this email.
+          </p>
+          <form
+            action={registerByManagerAction}
+            style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+          >
+            <input type="hidden" name="tournamentId" value={tournament.id} />
+            <label>
+              Archer name
+              <input name="archerName" type="text" />
+            </label>
+            <label>
+              Archer email
+              <input name="archerEmail" type="email" required />
+            </label>
+            <label>
+              Division
+              <select name="divisionId" required>
+                {tournament.divisions.map((division) => (
+                  <option key={division.id} value={division.id}>
+                    {division.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button type="submit" className="pill-btn pill-btn-primary" style={{ alignSelf: "flex-start" }}>
+              Add registrant
+            </button>
+          </form>
+        </section>
 
-      <section style={{ marginTop: "2.5rem", maxWidth: 480 }}>
-        <h2>Register a team roster</h2>
-        <p style={{ color: "var(--muted)" }}>
-          One archer per line, as <code>Name, email</code> (or just an email). Everyone goes into
-          the same division and team.
-        </p>
-        <form action={registerTeamRosterAction} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-          <input type="hidden" name="tournamentId" value={tournament.id} />
-          <label>
-            Team name
-            <input name="teamName" type="text" required style={{ display: "block", width: "100%" }} />
-          </label>
-          <label>
-            Division
-            <select name="divisionId" required style={{ display: "block", width: "100%" }}>
-              {tournament.divisions.map((division) => (
-                <option key={division.id} value={division.id}>
-                  {division.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Roster
-            <textarea
-              name="roster"
-              rows={6}
-              placeholder={"Jane Doe, jane@example.com\nJohn Smith, john@example.com"}
-              style={{ display: "block", width: "100%" }}
-            />
-          </label>
-          <button type="submit">Register roster</button>
-        </form>
-      </section>
+        <section className="glass-card">
+          <h2 style={{ marginTop: 0 }}>Register a team roster</h2>
+          <p className="muted" style={{ fontSize: "0.9rem" }}>
+            One archer per line, as <code>Name, email</code> (or just an email). Everyone goes into
+            the same division and team.
+          </p>
+          <form
+            action={registerTeamRosterAction}
+            style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+          >
+            <input type="hidden" name="tournamentId" value={tournament.id} />
+            <label>
+              Team name
+              <input name="teamName" type="text" required />
+            </label>
+            <label>
+              Division
+              <select name="divisionId" required>
+                {tournament.divisions.map((division) => (
+                  <option key={division.id} value={division.id}>
+                    {division.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Roster
+              <textarea
+                name="roster"
+                rows={6}
+                placeholder={"Jane Doe, jane@example.com\nJohn Smith, john@example.com"}
+              />
+            </label>
+            <button type="submit" className="pill-btn pill-btn-primary" style={{ alignSelf: "flex-start" }}>
+              Register roster
+            </button>
+          </form>
+        </section>
+      </div>
     </main>
   );
 }

@@ -19,9 +19,13 @@ export default async function TournamentDetailPage({ params }: { params: { id: s
 
   return (
     <main className="container" style={{ padding: "3rem 0" }}>
-      <p style={{ color: "var(--muted)", marginBottom: 0 }}>{tournament.organization.name}</p>
-      <h1 style={{ marginTop: "0.25rem" }}>{tournament.name}</h1>
-      <p style={{ color: "var(--muted)" }}>
+      <p className="muted" style={{ marginBottom: 0 }}>
+        {tournament.organization.name}
+      </p>
+      <h1 className="display-2" style={{ marginTop: "0.25rem" }}>
+        {tournament.name}
+      </h1>
+      <p className="muted">
         {tournament.venue ? `${tournament.venue} — ` : ""}
         {tournament.startDate.toDateString()} to {tournament.endDate.toDateString()}
       </p>
@@ -29,12 +33,12 @@ export default async function TournamentDetailPage({ params }: { params: { id: s
       {isOrganizer ? (
         <form
           action={updateTournamentStatusAction}
-          style={{ display: "flex", gap: "0.5rem", alignItems: "center", margin: "1rem 0" }}
+          style={{ display: "flex", gap: "0.6rem", alignItems: "center", margin: "1rem 0", flexWrap: "wrap" }}
         >
           <input type="hidden" name="tournamentId" value={tournament.id} />
-          <label>
-            Status
-            <select name="status" defaultValue={tournament.status} style={{ marginLeft: "0.5rem" }}>
+          <label style={{ margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span style={{ marginBottom: 0 }}>Status</span>
+            <select name="status" defaultValue={tournament.status} style={{ width: "auto" }}>
               {TOURNAMENT_STATUS_OPTIONS.map((status) => (
                 <option key={status} value={status}>
                   {status.replace(/_/g, " ").toLowerCase()}
@@ -42,59 +46,80 @@ export default async function TournamentDetailPage({ params }: { params: { id: s
               ))}
             </select>
           </label>
-          <button type="submit">Update status</button>
+          <button type="submit" className="pill-btn pill-btn-ghost pill-btn-sm">
+            Update status
+          </button>
         </form>
       ) : (
         <p>
-          Status: <strong>{tournament.status.replace(/_/g, " ").toLowerCase()}</strong>
+          Status: <span className="status-pill">{tournament.status.replace(/_/g, " ").toLowerCase()}</span>
         </p>
       )}
 
-      <h2>Stages</h2>
-      <ul>
-        {tournament.stages.map((stage) => (
-          <li key={stage.id}>
-            {stage.name} — {stage.formatTemplate.name} ({stage.scoringMethod.replace(/_/g, " ").toLowerCase()})
-            {isOrganizer && (
-              <>
-                {" — "}
-                {stage.scoringMethod === "SET_SYSTEM" ? (
-                  <Link href={`/app/tournaments/${tournament.id}/stages/${stage.id}/bracket`}>bracket</Link>
-                ) : (
-                  <Link href={`/app/tournaments/${tournament.id}/stages/${stage.id}/score`}>scoring</Link>
+      <div className="card-grid" style={{ marginTop: "2rem" }}>
+        <section className="glass-card">
+          <h2 style={{ marginTop: 0 }}>Stages</h2>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+            {tournament.stages.map((stage) => (
+              <li key={stage.id} style={{ borderTop: "1px solid var(--border)", paddingTop: "0.6rem" }}>
+                <div style={{ fontWeight: 600 }}>{stage.name}</div>
+                <div className="muted" style={{ fontSize: "0.9rem" }}>
+                  {stage.formatTemplate.name} ({stage.scoringMethod.replace(/_/g, " ").toLowerCase()})
+                </div>
+                {isOrganizer && (
+                  <div style={{ marginTop: "0.4rem" }}>
+                    {stage.scoringMethod === "SET_SYSTEM" ? (
+                      <Link href={`/app/tournaments/${tournament.id}/stages/${stage.id}/bracket`} style={{ fontWeight: 600 }}>
+                        Bracket &rarr;
+                      </Link>
+                    ) : (
+                      <Link href={`/app/tournaments/${tournament.id}/stages/${stage.id}/score`} style={{ fontWeight: 600 }}>
+                        Scoring &rarr;
+                      </Link>
+                    )}
+                  </div>
                 )}
-              </>
-            )}
-          </li>
-        ))}
-      </ul>
+              </li>
+            ))}
+          </ul>
+        </section>
 
-      <h2>Divisions</h2>
-      <ul>
-        {tournament.divisions.map((division) => (
-          <li key={division.id}>{division.name}</li>
-        ))}
-      </ul>
+        <section className="glass-card">
+          <h2 style={{ marginTop: 0 }}>Divisions</h2>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+            {tournament.divisions.map((division) => (
+              <span key={division.id} className="status-pill">
+                {division.name}
+              </span>
+            ))}
+          </div>
+        </section>
+      </div>
 
       {isOrganizer ? (
         <p style={{ marginTop: "2rem" }}>
-          <Link href={`/app/tournaments/${tournament.id}/registrations`}>Manage registrations &rarr;</Link>
+          <Link href={`/app/tournaments/${tournament.id}/registrations`} className="pill-btn pill-btn-primary pill-btn-sm">
+            Manage registrations
+          </Link>
         </p>
       ) : (
-        <section style={{ marginTop: "2rem" }}>
-          <h2>Your registration</h2>
+        <section className="glass-card" style={{ marginTop: "2rem" }}>
+          <h2 style={{ marginTop: 0 }}>Your registration</h2>
           {myRegistrations.length > 0 ? (
-            <ul>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
               {myRegistrations.map((registration) => (
                 <li key={registration.id}>
-                  {registration.division.name} — {registration.status.replace(/_/g, " ").toLowerCase()}
+                  {registration.division.name} —{" "}
+                  <span className="status-pill">{registration.status.replace(/_/g, " ").toLowerCase()}</span>
                 </li>
               ))}
             </ul>
           ) : tournament.status === "REGISTRATION_OPEN" ? (
-            <Link href={`/app/tournaments/${tournament.id}/register`}>Register &rarr;</Link>
+            <Link href={`/app/tournaments/${tournament.id}/register`} className="pill-btn pill-btn-primary">
+              Register
+            </Link>
           ) : (
-            <p style={{ color: "var(--muted)" }}>
+            <p className="muted" style={{ marginBottom: 0 }}>
               Registration isn&apos;t open yet (status: {tournament.status.replace(/_/g, " ").toLowerCase()}).
             </p>
           )}
