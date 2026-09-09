@@ -106,8 +106,8 @@ export default function MarketingHomePage() {
               Archer
             </a>
             <nav className="pill-nav on-dark">
-              <a href="/app/tournaments" className="pill-nav-link">
-                Browse tournaments
+              <a href="/demo" className="pill-nav-link">
+                View demo
               </a>
               <a href="/login" className="pill-nav-link">
                 Log in
@@ -136,8 +136,8 @@ export default function MarketingHomePage() {
               <a href="/signup" className="pill-btn pill-btn-accent">
                 Get started free
               </a>
-              <a href="/app/tournaments" className="pill-btn pill-btn-on-dark">
-                Browse tournaments
+              <a href="/demo" className="pill-btn pill-btn-on-dark">
+                View a demo tournament
               </a>
             </div>
           </div>
@@ -251,9 +251,14 @@ export default function MarketingHomePage() {
             <p className="lede on-dark" style={{ margin: "1rem auto 2rem", textAlign: "center" }}>
               Create your organization and publish a tournament in minutes.
             </p>
-            <a href="/signup" className="pill-btn pill-btn-accent">
-              Get started free
-            </a>
+            <div style={{ display: "flex", gap: "0.85rem", justifyContent: "center", flexWrap: "wrap" }}>
+              <a href="/signup" className="pill-btn pill-btn-accent">
+                Get started free
+              </a>
+              <a href="/demo" className="pill-btn pill-btn-on-dark">
+                View a demo tournament
+              </a>
+            </div>
           </div>
         </div>
       </section>
