@@ -16,6 +16,10 @@ export default async function TournamentDetailPage({ params }: { params: { id: s
   const membership = await getMembership(user.id, tournament.organizationId);
   const isOrganizer = Boolean(membership);
   const myRegistrations = isOrganizer ? [] : await listMyRegistrationsForTournament(user.id, tournament.id);
+  const isFunShoot = tournament.stages[0]?.formatTemplate.formatType === "FUN_SHOOT";
+  const incompleteRegistration = myRegistrations.find(
+    (r) => !((r.details as Record<string, unknown> | null)?.intakeCompletedAt)
+  );
 
   return (
     <main className="container" style={{ padding: "3rem 0" }}>
@@ -66,7 +70,7 @@ export default async function TournamentDetailPage({ params }: { params: { id: s
                 <div className="muted" style={{ fontSize: "0.9rem" }}>
                   {stage.formatTemplate.name} ({stage.scoringMethod.replace(/_/g, " ").toLowerCase()})
                 </div>
-                {isOrganizer && (
+                {isOrganizer && stage.scoringMethod !== "NONE" && (
                   <div style={{ marginTop: "0.4rem" }}>
                     {stage.scoringMethod === "SET_SYSTEM" ? (
                       <Link href={`/app/tournaments/${tournament.id}/stages/${stage.id}/bracket`} style={{ fontWeight: 600 }}>
@@ -77,6 +81,13 @@ export default async function TournamentDetailPage({ params }: { params: { id: s
                         Scoring &rarr;
                       </Link>
                     )}
+                  </div>
+                )}
+                {isOrganizer && isFunShoot && (
+                  <div style={{ marginTop: "0.4rem" }}>
+                    <Link href={`/app/tournaments/${tournament.id}/slots/manage`} style={{ fontWeight: 600 }}>
+                      Manage time slots &rarr;
+                    </Link>
                   </div>
                 )}
               </li>
@@ -106,18 +117,44 @@ export default async function TournamentDetailPage({ params }: { params: { id: s
         <section className="glass-card" style={{ marginTop: "2rem" }}>
           <h2 style={{ marginTop: 0 }}>Your registration</h2>
           {myRegistrations.length > 0 ? (
-            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-              {myRegistrations.map((registration) => (
-                <li key={registration.id}>
-                  {registration.division.name} —{" "}
-                  <span className="status-pill">{registration.status.replace(/_/g, " ").toLowerCase()}</span>
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                {myRegistrations.map((registration) => (
+                  <li key={registration.id}>
+                    {registration.division.name} —{" "}
+                    <span className="status-pill">{registration.status.replace(/_/g, " ").toLowerCase()}</span>
+                  </li>
+                ))}
+              </ul>
+              {isFunShoot && incompleteRegistration && (
+                <p style={{ marginTop: "1rem" }}>
+                  <Link
+                    href={`/app/tournaments/${tournament.id}/complete-registration?registrationId=${incompleteRegistration.id}`}
+                    className="pill-btn pill-btn-primary pill-btn-sm"
+                  >
+                    Complete your registration
+                  </Link>
+                </p>
+              )}
+              {isFunShoot && !incompleteRegistration && (
+                <p style={{ marginTop: "1rem" }}>
+                  <Link href={`/app/tournaments/${tournament.id}/slots`} className="pill-btn pill-btn-primary pill-btn-sm">
+                    Pick your time slots
+                  </Link>
+                </p>
+              )}
+            </>
           ) : tournament.status === "REGISTRATION_OPEN" ? (
-            <Link href={`/app/tournaments/${tournament.id}/register`} className="pill-btn pill-btn-primary">
-              Register
-            </Link>
+            <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+              <Link href={`/app/tournaments/${tournament.id}/register`} className="pill-btn pill-btn-primary">
+                Register
+              </Link>
+              {isFunShoot && (
+                <Link href={`/app/tournaments/${tournament.id}/register-team`} className="pill-btn pill-btn-ghost">
+                  Register a team
+                </Link>
+              )}
+            </div>
           ) : (
             <p className="muted" style={{ marginBottom: 0 }}>
               Registration isn&apos;t open yet (status: {tournament.status.replace(/_/g, " ").toLowerCase()}).

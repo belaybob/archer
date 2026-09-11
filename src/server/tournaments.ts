@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { slugify } from "@/lib/slugify";
 import type { TournamentStatus } from "@prisma/client";
 
-export type ScoringMethod = "CUMULATIVE_SCORE" | "SET_SYSTEM" | "HANDICAP_ADJUSTED";
+export type ScoringMethod = "CUMULATIVE_SCORE" | "SET_SYSTEM" | "HANDICAP_ADJUSTED" | "NONE";
 
 /** Status changes an organizer can make from the tournament detail page.
  * Not enforced as a strict state machine (e.g. nothing stops jumping from
@@ -32,6 +32,9 @@ export interface CreateTournamentInput {
   formatTemplateId: string;
   scoringMethod: ScoringMethod;
   divisionNames: string[];
+  /** Fun Shoot (and any future slot-based format): when registrants may
+   * start picking a time slot. Omitted/undefined = not in use yet. */
+  slotSelectionOpensAt?: Date;
 }
 
 export async function createTournament(input: CreateTournamentInput) {
@@ -66,6 +69,7 @@ export async function createTournament(input: CreateTournamentInput) {
       endDate: input.endDate,
       timezone: input.timezone || "UTC",
       status: "DRAFT",
+      slotSelectionOpensAt: input.slotSelectionOpensAt ?? null,
       stages: {
         create: [
           {
@@ -122,4 +126,10 @@ export async function getTournamentDetail(tournamentId: string) {
 
 export async function updateTournamentStatus(tournamentId: string, status: TournamentStatus) {
   return db.tournament.update({ where: { id: tournamentId }, data: { status } });
+}
+
+/** Sets (or clears, with null) when registrants may start picking a time
+ * slot -- used by Fun Shoot-style tournaments. */
+export async function updateSlotSelectionOpensAt(tournamentId: string, opensAt: Date | null) {
+  return db.tournament.update({ where: { id: tournamentId }, data: { slotSelectionOpensAt: opensAt } });
 }

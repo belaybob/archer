@@ -90,6 +90,7 @@ enum FormatType {
   THREE_D
   CLOUT
   LEAGUE
+  FUN_SHOOT     // non-competitive; no scores, just time-slot-based scheduling
   CUSTOM
 }
 
@@ -97,6 +98,7 @@ enum ScoringMethod {
   CUMULATIVE_SCORE   // total score across ends/course wins (ranking rounds, field, 3D qualifiers)
   SET_SYSTEM         // head-to-head, match-points per set, e.g. Olympic elimination
   HANDICAP_ADJUSTED  // score adjusted by a handicap table for fair comparison (club leagues)
+  NONE               // no scoring at all, e.g. a non-competitive Fun Shoot
 }
 
 // A reusable format definition. `organizationId` null = a built-in preset
@@ -148,6 +150,10 @@ model Tournament {
   capacity             Int?
   registrationOpensAt  DateTime?
   registrationClosesAt DateTime?
+  // Fun Shoot (and any future slot-based format): the date/time at which
+  // registrants may start picking their per-day time slot. Null = slot
+  // selection isn't in use or hasn't been scheduled yet.
+  slotSelectionOpensAt DateTime?
   // Reserved for the future payments phase -- not used in v1.
   entryFeeCents        Int?
   entryFeeCurrency     String?
@@ -177,6 +183,7 @@ model TournamentStage {
   formatTemplate FormatTemplate @relation(fields: [formatTemplateId], references: [id])
   scoreEntries   ScoreEntry[]
   matches        Match[]
+  timeSlots      TimeSlot[]
 
   @@unique([tournamentId, sequence])
 }
@@ -217,6 +224,11 @@ model Registration {
   teamId         String?
   status         RegistrationStatus @default(PENDING)
   notes          String?
+  // Format-specific intake data that doesn't warrant its own columns, e.g.
+  // Fun Shoot's { tshirtSize, safetyVideoWatched, waiverSignedName,
+  // waiverSignedAt, termsAgreedAt, intakeCompletedAt }. Null/absent keys
+  // just mean that piece of intake hasn't happened yet.
+  details        Json?
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 
@@ -226,6 +238,7 @@ model Registration {
   registeredBy User         @relation("RegisteredBy", fields: [registeredById], references: [id])
   team         Team?        @relation(fields: [teamId], references: [id])
   scoreEntries ScoreEntry[]
+  slotBookings SlotBooking[]
 
   @@unique([tournamentId, archerId, divisionId])
 }
@@ -241,6 +254,43 @@ model Team {
   tournament    Tournament     @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   manager       User?          @relation(fields: [managerId], references: [id])
   registrations Registration[]
+}
+
+// ---------------------------------------------------------------------------
+// Time slots (Fun Shoot / non-competitive, schedule-based formats)
+// ---------------------------------------------------------------------------
+
+// One bookable slot on one day of a slot-based stage (e.g. Fun Shoot).
+// `capacity` is the max number of registrations (individuals or teams --
+// a team books one slot per day for the whole team) that may hold this
+// slot at once; remaining capacity is computed from SlotBooking counts
+// rather than stored, so it's always consistent.
+model TimeSlot {
+  id        String   @id @default(cuid())
+  stageId   String
+  date      DateTime // the calendar day this slot belongs to
+  label     String   // e.g. "9:00 AM - 10:00 AM"
+  capacity  Int
+  createdAt DateTime @default(now())
+
+  stage    TournamentStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  bookings SlotBooking[]
+}
+
+// A registration's (individual's or team's) claim on one TimeSlot. One
+// booking per registration per day is enforced at the application layer
+// (a registration may hold at most one TimeSlot per calendar date, but can
+// hold one per day across a multi-day event).
+model SlotBooking {
+  id             String   @id @default(cuid())
+  timeSlotId     String
+  registrationId String
+  createdAt      DateTime @default(now())
+
+  timeSlot     TimeSlot     @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
+  registration Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+
+  @@unique([timeSlotId, registrationId])
 }
 
 // ---------------------------------------------------------------------------

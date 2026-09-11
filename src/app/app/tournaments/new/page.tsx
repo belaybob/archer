@@ -87,12 +87,22 @@ export default async function NewTournamentPage({
               <option value="CUMULATIVE_SCORE">Cumulative score (ranking rounds, field/3D, most club events)</option>
               <option value="SET_SYSTEM">Head-to-head set system (elimination brackets)</option>
               <option value="HANDICAP_ADJUSTED">Handicap-adjusted (leagues, mixed-ability competitions)</option>
+              <option value="NONE">No scoring (fun shoot / non-competitive)</option>
             </select>
           </label>
 
           <label>
             Divisions (comma separated)
             <input name="divisions" type="text" defaultValue="Recurve, Compound, Barebow" />
+          </label>
+
+          <label>
+            Time slot selection opens
+            <input name="slotSelectionOpensAt" type="datetime-local" />
+            <span className="muted" style={{ fontSize: "0.82rem" }}>
+              Fun Shoot only — the date registrants may start picking a time slot. Leave blank if this
+              tournament doesn&apos;t use time slots.
+            </span>
           </label>
 
           <button

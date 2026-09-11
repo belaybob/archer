@@ -2,6 +2,13 @@ import { db } from "@/lib/db";
 import { findOrCreateUserByEmail } from "@/server/users";
 import type { RegistrationStatus } from "@prisma/client";
 
+/** Format-specific intake data captured for a registration, e.g. Fun Shoot's
+ * T-shirt size / safety video / liability waiver / terms agreement. Kept as
+ * a loose record rather than a strict interface since it varies by format
+ * and lives in a Json column -- callers building it (Server Actions) are
+ * responsible for shaping it correctly for the tournament's format. */
+export type RegistrationDetails = Record<string, unknown>;
+
 /** Registrations that occupy a capacity slot -- withdrawn/waitlisted don't. */
 const OCCUPIES_CAPACITY: RegistrationStatus[] = ["CONFIRMED", "CHECKED_IN"];
 
@@ -29,8 +36,16 @@ function assertRegistrationOpen(tournament: { status: string }) {
   }
 }
 
-/** An archer registering themselves. */
-export async function registerSelf(input: { tournamentId: string; archerId: string; divisionId: string; notes?: string }) {
+/** An archer registering themselves. `details` carries format-specific
+ * intake data (e.g. Fun Shoot's T-shirt size/waiver/safety video/terms),
+ * captured up front for an individual self-registration. */
+export async function registerSelf(input: {
+  tournamentId: string;
+  archerId: string;
+  divisionId: string;
+  notes?: string;
+  details?: RegistrationDetails;
+}) {
   const tournament = await db.tournament.findUniqueOrThrow({ where: { id: input.tournamentId } });
   assertRegistrationOpen(tournament);
   await assertDivisionBelongsToTournament(input.tournamentId, input.divisionId);
@@ -58,6 +73,7 @@ export async function registerSelf(input: { tournamentId: string; archerId: stri
       registeredById: input.archerId,
       status,
       notes: input.notes?.trim() || null,
+      details: input.details ?? undefined,
     },
   });
 }
@@ -186,6 +202,21 @@ export async function updateRegistrationStatus(registrationId: string, status: R
   return db.registration.update({ where: { id: registrationId }, data: { status } });
 }
 
+/** Fills in a registration's format-specific intake data -- used by the
+ * second step of Fun Shoot's team flow, where each teammate (added to the
+ * roster by their captain, so their Registration already exists but has no
+ * `details` yet) confirms their own info. Merges onto any existing details
+ * rather than replacing wholesale, so re-visiting the intake form to fix a
+ * typo doesn't drop other fields. */
+export async function completeRegistrationIntake(registrationId: string, details: RegistrationDetails) {
+  const registration = await db.registration.findUniqueOrThrow({ where: { id: registrationId } });
+  const existingDetails = (registration.details as RegistrationDetails | null) ?? {};
+  return db.registration.update({
+    where: { id: registrationId },
+    data: { details: { ...existingDetails, ...details } },
+  });
+}
+
 /** Confirmed/checked-in registrations in one tournament + division, ordered
  * by when they registered -- used as the default bracket seeding order
  * when no ranking-round standings are available to seed from instead. */
@@ -212,6 +243,16 @@ export async function listMyRegistrationsForTournament(archerId: string, tournam
   return db.registration.findMany({
     where: { archerId, tournamentId },
     include: { division: true },
+  });
+}
+
+/** A single registration by id, with the archer/division/tournament loaded
+ * -- used by the intake-completion flow to confirm the registration belongs
+ * to the person completing it before writing their details. */
+export async function getRegistrationById(registrationId: string) {
+  return db.registration.findUnique({
+    where: { id: registrationId },
+    include: { archer: true, division: true, tournament: true, team: true },
   });
 }
 

@@ -4,6 +4,7 @@ import { requireMembership } from "@/server/organizations";
 import { getTournamentDetail } from "@/server/tournaments";
 import { getBracket } from "@/server/brackets";
 import { buildBracketAction, recordMatchSetsAction, resolveTiedMatchAction } from "@/app/actions/brackets";
+import { BracketDiagram, type BracketRound } from "@/components/BracketDiagram";
 
 function participantLabel(
   registrationId: string | null,
@@ -37,6 +38,82 @@ export default async function StageBracketPage({
   if (!division) notFound();
 
   const bracket = await getBracket(stage.id, divisionId);
+
+  const rounds: BracketRound[] = bracket.rounds.map((round) => ({
+    name:
+      round.roundNumber === bracket.rounds.length
+        ? "Final"
+        : round.roundNumber === bracket.rounds.length - 1
+        ? "Semifinal"
+        : `Round ${round.roundNumber}`,
+    matches: round.matches.map((match) => {
+      const aLabel = participantLabel(match.participantAId, bracket.participantsById);
+      const bLabel = participantLabel(match.participantBId, bracket.participantsById);
+      const winnerLabel =
+        match.status === "COMPLETE" ? participantLabel(match.winnerId, bracket.participantsById) : null;
+
+      return {
+        key: match.id,
+        a: { label: aLabel, winner: Boolean(winnerLabel) && winnerLabel === aLabel },
+        b: { label: bLabel, winner: Boolean(winnerLabel) && winnerLabel === bLabel },
+        note: winnerLabel ? `Winner: ${winnerLabel}` : undefined,
+        footer:
+          match.status !== "COMPLETE" && match.participantAId && match.participantBId ? (
+            <>
+              <form action={recordMatchSetsAction} style={{ marginTop: "0.35rem" }}>
+                <input type="hidden" name="tournamentId" value={tournament.id} />
+                <input type="hidden" name="stageId" value={stage.id} />
+                <input type="hidden" name="matchId" value={match.id} />
+                <input
+                  name="sets"
+                  type="text"
+                  placeholder="28-26, 27-27, 25-29"
+                  style={{ fontSize: "0.78rem", padding: "0.35rem 0.55rem" }}
+                />
+                <button
+                  type="submit"
+                  className="pill-btn pill-btn-ghost pill-btn-sm"
+                  style={{ marginTop: "0.3rem", padding: "0.3rem 0.7rem", fontSize: "0.75rem" }}
+                >
+                  Record sets
+                </button>
+              </form>
+              {match.status === "IN_PROGRESS" && (
+                <form
+                  action={resolveTiedMatchAction}
+                  style={{ marginTop: "0.35rem", display: "flex", gap: "0.3rem", alignItems: "center" }}
+                >
+                  <input type="hidden" name="tournamentId" value={tournament.id} />
+                  <input type="hidden" name="stageId" value={stage.id} />
+                  <input type="hidden" name="matchId" value={match.id} />
+                  <span className="muted" style={{ fontSize: "0.7rem" }}>
+                    Shoot-off:
+                  </span>
+                  <button
+                    type="submit"
+                    name="winner"
+                    value="A"
+                    className="pill-btn pill-btn-ghost pill-btn-sm"
+                    style={{ padding: "0.2rem 0.55rem", fontSize: "0.72rem" }}
+                  >
+                    A
+                  </button>
+                  <button
+                    type="submit"
+                    name="winner"
+                    value="B"
+                    className="pill-btn pill-btn-ghost pill-btn-sm"
+                    style={{ padding: "0.2rem 0.55rem", fontSize: "0.72rem" }}
+                  >
+                    B
+                  </button>
+                </form>
+              )}
+            </>
+          ) : undefined,
+      };
+    }),
+  }));
 
   return (
     <main className="container" style={{ padding: "3rem 0" }}>
@@ -79,63 +156,7 @@ export default async function StageBracketPage({
       {bracket.rounds.length === 0 ? (
         <p className="muted">No bracket built yet for {division.name}.</p>
       ) : (
-        <div style={{ display: "flex", gap: "1.5rem", overflowX: "auto", paddingBottom: "1rem" }}>
-          {bracket.rounds.map((round) => (
-            <div key={round.roundNumber} style={{ minWidth: 260 }}>
-              <h3>
-                {round.roundNumber === bracket.rounds.length
-                  ? "Final"
-                  : round.roundNumber === bracket.rounds.length - 1
-                  ? "Semifinal"
-                  : `Round ${round.roundNumber}`}
-              </h3>
-              {round.matches.map((match) => (
-                <div key={match.id} className="surface-card" style={{ padding: "1rem", marginBottom: "0.85rem" }}>
-                  <div style={{ fontWeight: 600 }}>{participantLabel(match.participantAId, bracket.participantsById)}</div>
-                  <div className="muted" style={{ fontSize: "0.8rem" }}>vs</div>
-                  <div style={{ fontWeight: 600 }}>{participantLabel(match.participantBId, bracket.participantsById)}</div>
-
-                  {match.status === "COMPLETE" && (
-                    <p className="muted" style={{ marginBottom: 0, marginTop: "0.5rem" }}>
-                      Winner: {participantLabel(match.winnerId, bracket.participantsById)}
-                    </p>
-                  )}
-
-                  {match.status !== "COMPLETE" && match.participantAId && match.participantBId && (
-                    <>
-                      <form action={recordMatchSetsAction} style={{ marginTop: "0.6rem" }}>
-                        <input type="hidden" name="tournamentId" value={tournament.id} />
-                        <input type="hidden" name="stageId" value={stage.id} />
-                        <input type="hidden" name="matchId" value={match.id} />
-                        <input name="sets" type="text" placeholder="28-26, 27-27, 25-29" />
-                        <button type="submit" className="pill-btn pill-btn-ghost pill-btn-sm" style={{ marginTop: "0.5rem" }}>
-                          Record sets
-                        </button>
-                      </form>
-                      {match.status === "IN_PROGRESS" && (
-                        <form
-                          action={resolveTiedMatchAction}
-                          style={{ marginTop: "0.6rem", display: "flex", gap: "0.4rem", alignItems: "center" }}
-                        >
-                          <input type="hidden" name="tournamentId" value={tournament.id} />
-                          <input type="hidden" name="stageId" value={stage.id} />
-                          <input type="hidden" name="matchId" value={match.id} />
-                          <span className="muted" style={{ fontSize: "0.8rem" }}>Shoot-off winner:</span>
-                          <button type="submit" name="winner" value="A" className="pill-btn pill-btn-ghost pill-btn-sm">
-                            A
-                          </button>
-                          <button type="submit" name="winner" value="B" className="pill-btn pill-btn-ghost pill-btn-sm">
-                            B
-                          </button>
-                        </form>
-                      )}
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
+        <BracketDiagram rounds={rounds} matchHeight={190} />
       )}
     </main>
   );

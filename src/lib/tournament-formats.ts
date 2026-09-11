@@ -15,9 +15,10 @@ export type FormatType =
   | "THREE_D"
   | "CLOUT"
   | "LEAGUE"
+  | "FUN_SHOOT"
   | "CUSTOM";
 
-export type ScoringMethod = "CUMULATIVE_SCORE" | "SET_SYSTEM" | "HANDICAP_ADJUSTED";
+export type ScoringMethod = "CUMULATIVE_SCORE" | "SET_SYSTEM" | "HANDICAP_ADJUSTED" | "NONE";
 
 export interface FormatPreset {
   name: string;
@@ -104,6 +105,17 @@ export const BUILT_IN_FORMAT_PRESETS: FormatPreset[] = [
       roundTemplate: "Indoor 18m",
       seasonWeeks: 10,
       bestScoresCounted: 3,
+    },
+  },
+  {
+    name: "Fun Shoot — Non-Competitive",
+    formatType: "FUN_SHOOT",
+    description:
+      "No scores are tracked -- individuals and teams self-register, then pick a time slot for each day of the event once slot selection opens. Great for open houses, fundraisers, or come-and-try events.",
+    defaultScoringMethod: "NONE",
+    config: {
+      groupSize: 4,
+      notes: "No scores are tracked -- archers rotate through for fun.",
     },
   },
 ];

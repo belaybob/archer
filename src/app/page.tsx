@@ -28,6 +28,7 @@ const FORMAT_LABELS: Record<FormatType, string> = {
   THREE_D: "3D",
   CLOUT: "Clout",
   LEAGUE: "Club leagues",
+  FUN_SHOOT: "Fun Shoot",
   CUSTOM: "Custom",
 };
 

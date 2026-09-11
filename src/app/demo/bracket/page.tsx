@@ -1,4 +1,19 @@
 import { DEMO_TOURNAMENT, DEMO_BRACKET } from "@/lib/demo-data";
+import { BracketDiagram, type BracketRound } from "@/components/BracketDiagram";
+
+function seedName(label: string) {
+  return label.split(" (")[0];
+}
+
+const ROUNDS: BracketRound[] = DEMO_BRACKET.rounds.map((round, roundIndex) => ({
+  name: round.name,
+  matches: round.matches.map((match, matchIndex) => ({
+    key: `${roundIndex}-${matchIndex}`,
+    a: { label: match.a, winner: seedName(match.a) === match.winner },
+    b: { label: match.b, winner: seedName(match.b) === match.winner },
+    note: match.score,
+  })),
+}));
 
 export default function DemoBracketPage() {
   return (
@@ -13,22 +28,8 @@ export default function DemoBracketPage() {
         advance on their own.
       </p>
 
-      <div style={{ display: "flex", gap: "1.5rem", overflowX: "auto", marginTop: "2rem", paddingBottom: "1rem" }}>
-        {DEMO_BRACKET.rounds.map((round) => (
-          <div key={round.name} style={{ minWidth: 260 }}>
-            <h3>{round.name}</h3>
-            {round.matches.map((match, index) => (
-              <div key={index} className="surface-card" style={{ padding: "1rem", marginBottom: "0.85rem" }}>
-                <div style={{ fontWeight: match.winner === match.a.split(" (")[0] ? 700 : 400 }}>{match.a}</div>
-                <div className="muted" style={{ fontSize: "0.8rem" }}>vs</div>
-                <div style={{ fontWeight: match.winner === match.b.split(" (")[0] ? 700 : 400 }}>{match.b}</div>
-                <p className="muted" style={{ marginBottom: 0, marginTop: "0.5rem", fontSize: "0.85rem" }}>
-                  Winner: <strong style={{ color: "var(--ink)" }}>{match.winner}</strong> ({match.score})
-                </p>
-              </div>
-            ))}
-          </div>
-        ))}
+      <div style={{ marginTop: "2rem" }}>
+        <BracketDiagram rounds={ROUNDS} matchHeight={86} />
       </div>
 
       <div className="glass-card" style={{ marginTop: "1rem", maxWidth: 420, textAlign: "center" }}>

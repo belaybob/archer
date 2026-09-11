@@ -19,6 +19,7 @@ export async function createTournamentAction(formData: FormData) {
   const formatTemplateId = String(formData.get("formatTemplateId") || "");
   const scoringMethod = String(formData.get("scoringMethod") || "CUMULATIVE_SCORE") as ScoringMethod;
   const divisionNames = String(formData.get("divisions") || "").split(",");
+  const slotSelectionOpensAt = String(formData.get("slotSelectionOpensAt") || "");
 
   if (!startDate || !endDate || !formatTemplateId) {
     throw new Error("Dates and a format are required.");
@@ -33,6 +34,7 @@ export async function createTournamentAction(formData: FormData) {
     formatTemplateId,
     scoringMethod,
     divisionNames,
+    slotSelectionOpensAt: slotSelectionOpensAt ? new Date(slotSelectionOpensAt) : undefined,
   });
 
   redirect(`/app/tournaments/${tournament.id}`);
