@@ -103,6 +103,14 @@ export function NewTournamentForm({
         </label>
       )}
 
+      <label>
+        Important information
+        <textarea name="description" rows={6} placeholder="Schedule, what to bring, parking, weather policy, etc." />
+        <span className="muted" style={{ fontSize: "0.82rem" }}>
+          Shown on the event detail page. You can add or edit this later too.
+        </span>
+      </label>
+
       <button
         type="submit"
         className="pill-btn pill-btn-primary"

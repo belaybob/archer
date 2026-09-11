@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/current-user";
 import { getMembership } from "@/server/organizations";
 import { getTournamentDetail, TOURNAMENT_STATUS_OPTIONS } from "@/server/tournaments";
 import { listMyRegistrationsForTournament } from "@/server/registrations";
-import { updateTournamentStatusAction } from "@/app/actions/tournament-status";
+import { updateTournamentStatusAction, updateTournamentDescriptionAction } from "@/app/actions/tournament-status";
 
 export default async function TournamentDetailPage({ params }: { params: { id: string } }) {
   const user = await getCurrentUser();
@@ -20,6 +20,7 @@ export default async function TournamentDetailPage({ params }: { params: { id: s
   const incompleteRegistration = myRegistrations.find(
     (r) => !((r.details as Record<string, unknown> | null)?.intakeCompletedAt)
   );
+  const slotsOpen = Boolean(tournament.slotSelectionOpensAt && tournament.slotSelectionOpensAt <= new Date());
 
   return (
     <main className="container" style={{ padding: "3rem 0" }}>
@@ -107,6 +108,35 @@ export default async function TournamentDetailPage({ params }: { params: { id: s
         </section>
       </div>
 
+      <section className="glass-card" style={{ marginTop: "2rem" }}>
+        <h2 style={{ marginTop: 0 }}>Important information</h2>
+        {isOrganizer ? (
+          <form
+            action={updateTournamentDescriptionAction}
+            style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}
+          >
+            <input type="hidden" name="tournamentId" value={tournament.id} />
+            <textarea
+              name="description"
+              rows={8}
+              defaultValue={tournament.description ?? ""}
+              placeholder="Schedule, what to bring, parking, weather policy, etc."
+            />
+            <button type="submit" className="pill-btn pill-btn-ghost pill-btn-sm" style={{ alignSelf: "flex-start" }}>
+              Save
+            </button>
+          </form>
+        ) : tournament.description ? (
+          <p className="muted" style={{ marginBottom: 0, whiteSpace: "pre-wrap" }}>
+            {tournament.description}
+          </p>
+        ) : (
+          <p className="muted" style={{ marginBottom: 0 }}>
+            The organizer hasn&apos;t added any details yet.
+          </p>
+        )}
+      </section>
+
       {isOrganizer ? (
         <p style={{ marginTop: "2rem" }}>
           <Link href={`/app/tournaments/${tournament.id}/registrations`} className="pill-btn pill-btn-primary pill-btn-sm">
@@ -138,9 +168,19 @@ export default async function TournamentDetailPage({ params }: { params: { id: s
               )}
               {isFunShoot && !incompleteRegistration && (
                 <p style={{ marginTop: "1rem" }}>
-                  <Link href={`/app/tournaments/${tournament.id}/slots`} className="pill-btn pill-btn-primary pill-btn-sm">
-                    Pick your time slots
-                  </Link>
+                  {slotsOpen ? (
+                    <Link href={`/app/tournaments/${tournament.id}/slots`} className="pill-btn pill-btn-primary pill-btn-sm">
+                      Pick your time slots
+                    </Link>
+                  ) : tournament.slotSelectionOpensAt ? (
+                    <span className="muted" style={{ fontSize: "0.85rem" }}>
+                      Time slot selection opens {tournament.slotSelectionOpensAt.toLocaleString()}.
+                    </span>
+                  ) : (
+                    <span className="muted" style={{ fontSize: "0.85rem" }}>
+                      Registration complete — no time slots published yet.
+                    </span>
+                  )}
                 </p>
               )}
             </>

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/current-user";
 import { requireMembership } from "@/server/organizations";
-import { getTournamentDetail, updateTournamentStatus } from "@/server/tournaments";
+import { getTournamentDetail, updateTournamentStatus, updateTournamentDescription } from "@/server/tournaments";
 import type { TournamentStatus } from "@prisma/client";
 
 export async function updateTournamentStatusAction(formData: FormData) {
@@ -19,5 +19,20 @@ export async function updateTournamentStatusAction(formData: FormData) {
   await requireMembership(user.id, tournament.organizationId);
 
   await updateTournamentStatus(tournamentId, status);
+  revalidatePath(`/app/tournaments/${tournamentId}`);
+}
+
+export async function updateTournamentDescriptionAction(formData: FormData) {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
+  const tournamentId = String(formData.get("tournamentId") || "");
+  const description = String(formData.get("description") || "");
+
+  const tournament = await getTournamentDetail(tournamentId);
+  if (!tournament) throw new Error("Event not found.");
+  await requireMembership(user.id, tournament.organizationId);
+
+  await updateTournamentDescription(tournamentId, description);
   revalidatePath(`/app/tournaments/${tournamentId}`);
 }

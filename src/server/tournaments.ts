@@ -35,6 +35,10 @@ export interface CreateTournamentInput {
   /** Fun Shoot (and any future slot-based format): when registrants may
    * start picking a time slot. Omitted/undefined = not in use yet. */
   slotSelectionOpensAt?: Date;
+  /** Free-text "important information" for the event -- schedule notes,
+   * what to bring, parking, weather policy, etc. Can run to several
+   * paragraphs; shown as-is on the event detail page. */
+  description?: string;
 }
 
 export async function createTournament(input: CreateTournamentInput) {
@@ -70,6 +74,7 @@ export async function createTournament(input: CreateTournamentInput) {
       timezone: input.timezone || "UTC",
       status: "DRAFT",
       slotSelectionOpensAt: input.slotSelectionOpensAt ?? null,
+      description: input.description?.trim() || null,
       stages: {
         create: [
           {
@@ -132,4 +137,15 @@ export async function updateTournamentStatus(tournamentId: string, status: Tourn
  * slot -- used by Fun Shoot-style tournaments. */
 export async function updateSlotSelectionOpensAt(tournamentId: string, opensAt: Date | null) {
   return db.tournament.update({ where: { id: tournamentId }, data: { slotSelectionOpensAt: opensAt } });
+}
+
+/** Updates the event's free-text "important information" -- schedule notes,
+ * what to bring, parking, weather policy, etc. Organizers can edit this any
+ * time from the event detail page; it's shown to everyone viewing the
+ * event, so it's separate from the internal-only status field. */
+export async function updateTournamentDescription(tournamentId: string, description: string) {
+  return db.tournament.update({
+    where: { id: tournamentId },
+    data: { description: description.trim() || null },
+  });
 }

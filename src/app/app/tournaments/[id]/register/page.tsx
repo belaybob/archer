@@ -122,7 +122,13 @@ export default async function SelfRegisterPage({
 
               <label style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem" }}>
                 <input type="checkbox" name="termsAgreed" required style={{ marginTop: "0.25rem" }} />
-                <span>I agree to the event&apos;s terms and conditions.</span>
+                <span>
+                  I agree to the event&apos;s{" "}
+                  <Link href="/terms" target="_blank" rel="noopener noreferrer" style={{ fontWeight: 600 }}>
+                    terms and conditions
+                  </Link>
+                  .
+                </span>
               </label>
             </>
           )}
