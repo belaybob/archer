@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { findOrCreateUserByEmail } from "@/server/users";
-import type { RegistrationStatus } from "@prisma/client";
+import type { Prisma, RegistrationStatus } from "@prisma/client";
 
 /** Format-specific intake data captured for a registration, e.g. Fun Shoot's
  * T-shirt size / safety video / liability waiver / terms agreement. Kept as
@@ -73,7 +73,7 @@ export async function registerSelf(input: {
       registeredById: input.archerId,
       status,
       notes: input.notes?.trim() || null,
-      details: input.details ?? undefined,
+      details: input.details ? (input.details as Prisma.InputJsonValue) : undefined,
     },
   });
 }
@@ -213,7 +213,7 @@ export async function completeRegistrationIntake(registrationId: string, details
   const existingDetails = (registration.details as RegistrationDetails | null) ?? {};
   return db.registration.update({
     where: { id: registrationId },
-    data: { details: { ...existingDetails, ...details } },
+    data: { details: { ...existingDetails, ...details } as Prisma.InputJsonValue },
   });
 }
 
