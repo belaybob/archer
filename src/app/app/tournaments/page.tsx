@@ -12,11 +12,11 @@ export default async function BrowseTournamentsPage() {
 
   return (
     <main className="container" style={{ padding: "3rem 0" }}>
-      <h1 className="display-2">Browse tournaments</h1>
+      <h1 className="display-2">Browse events</h1>
 
       {tournaments.length === 0 ? (
         <p className="muted" style={{ marginTop: "1.5rem" }}>
-          No published tournaments yet.
+          No published events yet.
         </p>
       ) : (
         <div className="card-grid" style={{ marginTop: "2rem" }}>

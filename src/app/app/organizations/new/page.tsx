@@ -9,7 +9,7 @@ export default function NewOrganizationPage() {
           Create an organization
         </h1>
         <p className="muted">
-          This is the club, federation, or event promoter that will run tournaments. You&apos;ll be
+          This is the club, federation, or event promoter that will run events. You&apos;ll be
           its owner and can invite other managers/admins later.
         </p>
         <form

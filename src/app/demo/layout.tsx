@@ -18,7 +18,7 @@ export default function DemoLayout({ children }: { children: React.ReactNode }) 
           fontSize: "0.88rem",
         }}
       >
-        You&apos;re viewing a demo tournament with sample data — no account needed.{" "}
+        You&apos;re viewing a demo event with sample data — no account needed.{" "}
         <Link href="/signup" style={{ color: "#f2d999", fontWeight: 600, textDecoration: "none" }}>
           Get started free &rarr;
         </Link>

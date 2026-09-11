@@ -15,7 +15,7 @@ export async function updateTournamentStatusAction(formData: FormData) {
   const status = String(formData.get("status") || "") as TournamentStatus;
 
   const tournament = await getTournamentDetail(tournamentId);
-  if (!tournament) throw new Error("Tournament not found.");
+  if (!tournament) throw new Error("Event not found.");
   await requireMembership(user.id, tournament.organizationId);
 
   await updateTournamentStatus(tournamentId, status);

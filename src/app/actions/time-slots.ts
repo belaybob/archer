@@ -15,7 +15,7 @@ export async function createTimeSlotAction(formData: FormData) {
   const tournamentId = String(formData.get("tournamentId") || "");
   const stageId = String(formData.get("stageId") || "");
   const tournament = await getTournamentDetail(tournamentId);
-  if (!tournament) throw new Error("Tournament not found.");
+  if (!tournament) throw new Error("Event not found.");
   await requireMembership(user.id, tournament.organizationId);
 
   const date = String(formData.get("date") || "");
@@ -45,7 +45,7 @@ export async function deleteTimeSlotAction(formData: FormData) {
   const tournamentId = String(formData.get("tournamentId") || "");
   const timeSlotId = String(formData.get("timeSlotId") || "");
   const tournament = await getTournamentDetail(tournamentId);
-  if (!tournament) throw new Error("Tournament not found.");
+  if (!tournament) throw new Error("Event not found.");
   await requireMembership(user.id, tournament.organizationId);
 
   await deleteTimeSlot(timeSlotId);
@@ -58,7 +58,7 @@ export async function updateSlotSelectionOpensAtAction(formData: FormData) {
 
   const tournamentId = String(formData.get("tournamentId") || "");
   const tournament = await getTournamentDetail(tournamentId);
-  if (!tournament) throw new Error("Tournament not found.");
+  if (!tournament) throw new Error("Event not found.");
   await requireMembership(user.id, tournament.organizationId);
 
   const opensAt = String(formData.get("slotSelectionOpensAt") || "");
@@ -83,7 +83,7 @@ export async function bookTimeSlotAction(formData: FormData) {
   }
 
   const tournament = await getTournamentDetail(registration.tournamentId);
-  if (!tournament) throw new Error("Tournament not found.");
+  if (!tournament) throw new Error("Event not found.");
   if (tournament.slotSelectionOpensAt && tournament.slotSelectionOpensAt > new Date()) {
     redirect(
       `/app/tournaments/${registration.tournamentId}/slots?message=${encodeURIComponent(

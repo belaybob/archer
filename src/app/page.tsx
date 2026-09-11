@@ -122,9 +122,9 @@ export default function MarketingHomePage() {
 
         <div className="container" style={{ flex: 1, display: "flex", alignItems: "center", padding: "3rem 0" }}>
           <div style={{ maxWidth: 720 }}>
-            <span className="eyebrow on-dark">Multi-format tournament platform</span>
+            <span className="eyebrow on-dark">Multi-format event platform</span>
             <h1 className="display-1" style={{ color: "#fff", marginTop: "0.75rem" }}>
-              Run the tournament.
+              Run the event.
               <br />
               Not the spreadsheet.
             </h1>
@@ -138,7 +138,7 @@ export default function MarketingHomePage() {
                 Get started free
               </a>
               <a href="/demo" className="pill-btn pill-btn-on-dark">
-                View a demo tournament
+                View a demo event
               </a>
             </div>
           </div>
@@ -180,7 +180,7 @@ export default function MarketingHomePage() {
           <p className="lede" style={{ marginTop: "0.75rem", marginBottom: "3rem" }}>
             Distances, ends, target faces, course layout, and scoring method are all
             configuration — so it flexes to how your organization actually competes, instead of
-            forcing you into one shape of tournament.
+            forcing you into one shape of event.
           </p>
 
           <div className="card-grid">
@@ -206,7 +206,7 @@ export default function MarketingHomePage() {
               <span className="eyebrow">Self-registration</span>
               <h3 style={{ marginTop: "0.75rem" }}>Archers sign up themselves</h3>
               <p className="muted" style={{ marginBottom: 0 }}>
-                Archers create an account, browse open tournaments, and register into a division
+                Archers create an account, browse open events, and register into a division
                 in a couple of clicks — with waitlisting handled automatically once capacity is
                 reached.
               </p>
@@ -223,7 +223,7 @@ export default function MarketingHomePage() {
               <span className="eyebrow">Organizer tools</span>
               <h3 style={{ marginTop: "0.75rem" }}>Run the whole event</h3>
               <p className="muted" style={{ marginBottom: 0 }}>
-                Publish tournaments, open and close registration, track every registrant, and
+                Publish events, open and close registration, track every registrant, and
                 move status forward as the event runs — all from one dashboard.
               </p>
             </div>
@@ -247,17 +247,17 @@ export default function MarketingHomePage() {
             }}
           >
             <h2 className="display-2" style={{ color: "#fff" }}>
-              Ready to run your next tournament?
+              Ready to run your next event?
             </h2>
             <p className="lede on-dark" style={{ margin: "1rem auto 2rem", textAlign: "center" }}>
-              Create your organization and publish a tournament in minutes.
+              Create your organization and publish an event in minutes.
             </p>
             <div style={{ display: "flex", gap: "0.85rem", justifyContent: "center", flexWrap: "wrap" }}>
               <a href="/signup" className="pill-btn pill-btn-accent">
                 Get started free
               </a>
               <a href="/demo" className="pill-btn pill-btn-on-dark">
-                View a demo tournament
+                View a demo event
               </a>
             </div>
           </div>
@@ -271,7 +271,7 @@ export default function MarketingHomePage() {
         >
           <span style={{ fontFamily: "var(--font-display)", fontWeight: 800 }}>Archer</span>
           <span className="muted" style={{ fontSize: "0.9rem" }}>
-            Tournament registration &amp; management for every common archery format.
+            Event registration &amp; management for every common archery format.
           </span>
         </div>
       </footer>

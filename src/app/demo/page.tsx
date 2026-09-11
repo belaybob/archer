@@ -4,7 +4,7 @@ import { DEMO_TOURNAMENT } from "@/lib/demo-data";
 export default function DemoOverviewPage() {
   return (
     <main className="container" style={{ padding: "3rem 0" }}>
-      <span className="eyebrow">Sample tournament</span>
+      <span className="eyebrow">Sample event</span>
       <p className="muted" style={{ marginTop: "0.5rem", marginBottom: 0 }}>
         {DEMO_TOURNAMENT.organizationName}
       </p>

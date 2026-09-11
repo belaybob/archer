@@ -21,7 +21,7 @@ export async function recordEnd(input: {
   const registration = await db.registration.findUniqueOrThrow({ where: { id: input.registrationId } });
   const stage = await db.tournamentStage.findUniqueOrThrow({ where: { id: input.stageId } });
   if (stage.tournamentId !== registration.tournamentId) {
-    throw new Error("That registration isn't part of this tournament.");
+    throw new Error("That registration isn't part of this event.");
   }
 
   const endTotal = input.arrows.reduce((sum, a) => sum + a, 0);

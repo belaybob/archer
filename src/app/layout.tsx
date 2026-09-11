@@ -17,9 +17,9 @@ const body = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Archer — Tournament Registration & Management",
+  title: "Archer — Event Registration & Management",
   description:
-    "Register for and manage archery tournaments and competitions, in every common format.",
+    "Register for and manage archery events and competitions, in every common format.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

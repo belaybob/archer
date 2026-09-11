@@ -54,7 +54,7 @@ export async function registerSelfAction(formData: FormData) {
   const divisionId = String(formData.get("divisionId") || "");
 
   const tournament = await getTournamentDetail(tournamentId);
-  if (!tournament) throw new Error("Tournament not found.");
+  if (!tournament) throw new Error("Event not found.");
   const isFunShoot = tournament.stages[0]?.formatTemplate.formatType === "FUN_SHOOT";
 
   let details: RegistrationDetails | undefined;
@@ -73,7 +73,7 @@ export async function registerSelfAction(formData: FormData) {
   try {
     await registerSelf({ tournamentId, archerId: user.id, divisionId, details });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Couldn't register for this tournament.";
+    const message = error instanceof Error ? error.message : "Couldn't register for this event.";
     redirect(`/app/tournaments/${tournamentId}/register?message=${encodeURIComponent(message)}`);
   }
 
@@ -93,10 +93,10 @@ export async function registerTeamSelfAction(formData: FormData) {
 
   const tournamentId = String(formData.get("tournamentId") || "");
   const tournament = await getTournamentDetail(tournamentId);
-  if (!tournament) throw new Error("Tournament not found.");
+  if (!tournament) throw new Error("Event not found.");
   if (tournament.status !== "REGISTRATION_OPEN") {
     redirect(
-      `/app/tournaments/${tournamentId}?message=${encodeURIComponent("Registration isn't open for this tournament.")}`
+      `/app/tournaments/${tournamentId}?message=${encodeURIComponent("Registration isn't open for this event.")}`
     );
   }
 
@@ -171,7 +171,7 @@ export async function registerByManagerAction(formData: FormData) {
 
   const tournamentId = String(formData.get("tournamentId") || "");
   const tournament = await getTournamentDetail(tournamentId);
-  if (!tournament) throw new Error("Tournament not found.");
+  if (!tournament) throw new Error("Event not found.");
   await requireMembership(user.id, tournament.organizationId);
 
   const divisionId = String(formData.get("divisionId") || "");
@@ -200,7 +200,7 @@ export async function registerTeamRosterAction(formData: FormData) {
 
   const tournamentId = String(formData.get("tournamentId") || "");
   const tournament = await getTournamentDetail(tournamentId);
-  if (!tournament) throw new Error("Tournament not found.");
+  if (!tournament) throw new Error("Event not found.");
   await requireMembership(user.id, tournament.organizationId);
 
   const divisionId = String(formData.get("divisionId") || "");
@@ -255,7 +255,7 @@ export async function updateRegistrationStatusAction(formData: FormData) {
   const status = String(formData.get("status") || "") as RegistrationStatus;
 
   const tournament = await getTournamentDetail(tournamentId);
-  if (!tournament) throw new Error("Tournament not found.");
+  if (!tournament) throw new Error("Event not found.");
   await requireMembership(user.id, tournament.organizationId);
 
   await updateRegistrationStatus(registrationId, status);

@@ -40,7 +40,7 @@ export interface CreateTournamentInput {
 export async function createTournament(input: CreateTournamentInput) {
   const name = input.name.trim();
   if (!name) {
-    throw new Error("Tournament name is required.");
+    throw new Error("Event name is required.");
   }
   if (input.endDate < input.startDate) {
     throw new Error("End date can't be before the start date.");

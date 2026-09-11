@@ -15,7 +15,7 @@ const OCCUPIES_CAPACITY: RegistrationStatus[] = ["CONFIRMED", "CHECKED_IN"];
 async function assertDivisionBelongsToTournament(tournamentId: string, divisionId: string) {
   const division = await db.division.findUnique({ where: { id: divisionId } });
   if (!division || division.tournamentId !== tournamentId) {
-    throw new Error("That division doesn't belong to this tournament.");
+    throw new Error("That division doesn't belong to this event.");
   }
   return division;
 }
@@ -32,7 +32,7 @@ async function nextStatusForNewRegistration(tournamentId: string): Promise<Regis
 
 function assertRegistrationOpen(tournament: { status: string }) {
   if (tournament.status !== "REGISTRATION_OPEN") {
-    throw new Error("Registration isn't open for this tournament.");
+    throw new Error("Registration isn't open for this event.");
   }
 }
 
@@ -93,7 +93,7 @@ export async function registerByManager(input: {
 }) {
   const tournament = await db.tournament.findUniqueOrThrow({ where: { id: input.tournamentId } });
   if (tournament.status === "CANCELLED" || tournament.status === "COMPLETED") {
-    throw new Error(`Can't register archers into a tournament that's ${tournament.status.toLowerCase()}.`);
+    throw new Error(`Can't register archers into an event that's ${tournament.status.toLowerCase()}.`);
   }
   await assertDivisionBelongsToTournament(input.tournamentId, input.divisionId);
 
@@ -141,7 +141,7 @@ export async function registerTeamRoster(input: {
 }) {
   const tournament = await db.tournament.findUniqueOrThrow({ where: { id: input.tournamentId } });
   if (tournament.status === "CANCELLED" || tournament.status === "COMPLETED") {
-    throw new Error(`Can't register a roster into a tournament that's ${tournament.status.toLowerCase()}.`);
+    throw new Error(`Can't register a roster into an event that's ${tournament.status.toLowerCase()}.`);
   }
   await assertDivisionBelongsToTournament(input.tournamentId, input.divisionId);
 

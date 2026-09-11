@@ -21,7 +21,7 @@ export default async function AppHomePage() {
             Welcome to Archer
           </h1>
           <p className="muted">
-            You&apos;re not part of an organization yet. Create one to start setting up tournaments.
+            You&apos;re not part of an organization yet. Create one to start setting up events.
           </p>
           <Link href="/app/organizations/new" className="pill-btn pill-btn-primary">
             Create an organization
@@ -58,13 +58,13 @@ export default async function AppHomePage() {
                 </span>
               </h2>
               <Link href={`/app/tournaments/new?organizationId=${organization.id}`} className="pill-btn pill-btn-ghost pill-btn-sm">
-                + New tournament
+                + New event
               </Link>
             </div>
 
             {tournaments.length === 0 ? (
               <p className="muted" style={{ marginTop: "1rem", marginBottom: 0 }}>
-                No tournaments yet.
+                No events yet.
               </p>
             ) : (
               <ul style={{ listStyle: "none", padding: 0, margin: "1rem 0 0", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
