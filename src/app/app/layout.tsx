@@ -35,6 +35,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <a href="/app/tournaments" className="pill-nav-link">
               Browse events
             </a>
+            <a href="/app/registrations" className="pill-nav-link">
+              My registrations
+            </a>
             <form action={logoutAction} style={{ margin: 0, display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
               <span className="muted" style={{ padding: "0 0.25rem", fontSize: "0.85rem" }}>
                 {user.email}

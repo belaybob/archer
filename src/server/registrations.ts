@@ -256,10 +256,24 @@ export async function getRegistrationById(registrationId: string) {
   });
 }
 
+/** Everything an archer has registered for, across every organization --
+ * powers the "my registrations" page. Includes enough of each tournament
+ * (organization, stages+format) for that page to know whether a Fun Shoot
+ * registration still needs intake completed or has slots open, without a
+ * second query per row. */
 export async function listRegistrationsForArcher(archerId: string) {
   return db.registration.findMany({
     where: { archerId },
-    include: { tournament: true, division: true },
+    include: {
+      tournament: {
+        include: {
+          organization: true,
+          stages: { include: { formatTemplate: true }, orderBy: { sequence: "asc" } },
+        },
+      },
+      division: true,
+      team: true,
+    },
     orderBy: { createdAt: "desc" },
   });
 }
